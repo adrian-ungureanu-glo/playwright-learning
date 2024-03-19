@@ -1,0 +1,92 @@
+name: test
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Select the environment to execute the tests'
+        required: true
+        default: 'INT'
+        type: choice
+        options:
+          - TEST
+          - INT
+      
+      grep:
+        description: 'Execute tests with the following tags:'
+        required: false
+        # default: '@regression'
+        type: string
+        
+permissions:
+    contents: read
+    pages: write
+    id-token: write
+
+  
+jobs:
+  tests_e2e:
+    name: Run end-to-end tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - name: Install dependencies
+        run: npm ci
+      - name: Install playwright browsers
+        run: npx playwright install --with-deps
+      - name: Run tests
+        run: npx playwright test --grep "${{github.event.inputs.grep}}"
+      - uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: playwright-report
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v3
+      # - name: Setup pages
+      #   uses: actions/configure-pages@v3
+      #   with: 
+      #      authToken: ${{secrets.GITHUB_TOKEN}}
+      # - name: Upload artifact
+      #   uses: actions/upload-pages-artifact@v3
+      #   with:
+      #     path: playwright-report/
+      # - name: Deploy to github pages
+      #   id: deployment
+      #   uses: actions/deploy-pages@v3
+
+      # - name: Allure Report with history
+      #   uses: simple-elf/allure-report-action@v1.9            
+      # - name: Test marketplace action
+      #   uses: simple-elf/allure-report-action@master
+      #   if: always()
+      #   id: allure-report
+      #   with:
+      #     allure_results: build/allure-results
+      #     gh_pages: gh-pages
+      #     allure_report: allure-report
+      #     allure_history: allure-history
+      # - name: Deploy report to Github Pages
+      #   if: always()
+      #   uses: peaceiris/actions-gh-pages@v2
+      #   env:
+      #     PERSONAL_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     PUBLISH_BRANCH: gh-pages
+      #     PUBLISH_DIR: allure-history
+      # - name: Post the link to the report
+      #   if: always()
+      #   uses: Sibz/github-status-action@v1
+      #   with: 
+      #     authToken: ${{secrets.GITHUB_TOKEN}}
+      #     context: 'Test report'
+      #     state: 'success'
+      #     sha: ${{ github.event.pull_request.head.sha }}
+      #     target_url: simple-elf.github.io/github-allure-history/${{ github.run_number }}
