@@ -41,7 +41,7 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
         
-      - uses: ctions/upload-pages-artifact@v3.0.1
+      - uses: actions/upload-pages-artifact@v3.0.1
         if: always()
         with:
           name: playwright-report
