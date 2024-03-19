@@ -48,6 +48,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: playwright-report
+          path: ./playwright-learning
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v3
